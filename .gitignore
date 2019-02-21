@@ -1,23 +1,315 @@
-# Compiled class file
-*.class
+var st = [0, 0, 0, 0];
+var spearTot, swordTot, axeTot, lightTot, heavyTot, archerTot, marcherTot, totCap, currentCap, v1Time, v2Time, v3Time, v4Time, v1Cap, v2Cap, v3Cap, v4Cap, v1PP, v2PP, v3PP, v4PP, v1Time, v2Time, v3Time, v4Time, maximumDistance, scav, save;
+var durFactor;
 
-# Log file
-*.log
+if (window.location.href.indexOf("&screen=place&mode=scavenge") != -1) {
+    scav = document.getElementById("scavenge_screen");
+    addDiv();
 
-# BlueJ files
-*.ctxt
+    run();
+}
 
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
+save = function saveSettings() {
+    localStorage.spear = document.getElementById("spearCheck").checked;
+    localStorage.sword = document.getElementById("swordCheck").checked;
+    localStorage.axe = document.getElementById("axeCheck").checked;
+    localStorage.light = document.getElementById("lightCheck").checked;
+    localStorage.heavy = document.getElementById("heavyCheck").checked;
+    localStorage.archer = document.getElementById("archerCheck").checked;
+    localStorage.marcher = document.getElementById("marcherCheck").checked;
+    localStorage.v1PP = document.getElementById("v1PPCheck").checked;
+    localStorage.v2PP = document.getElementById("v2PPCheck").checked;
+    localStorage.v3PP = document.getElementById("v3PPCheck").checked;
+    localStorage.v4PP = document.getElementById("v4PPCheck").checked;
+    localStorage.maxDis = document.getElementById("maxDistanceTxt").value;
 
-# Package Files #
-*.jar
-*.war
-*.nar
-*.ear
-*.zip
-*.tar.gz
-*.rar
+    run();
+};
 
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
-hs_err_pid*
+function run() {
+    spearTot = swordTot = axeTot = lightTot = heavyTot = archerTot = marcherTot = 0;
+    v1PP = v2PP = v3PP = v4PP = 1;
+    clearDiv();
+    checkAvailableOptions();
+    getUnits();
+
+    setTotCap();
+    currentCap = v1Time = v2Time = v3Time = v4Time = v1Cap = v2Cap = v3Cap = v4Cap = 0;
+    checkPPSettings();
+    setMaxDistance();
+    calculateRatios();
+    addLineBreak();
+    addCheckbox("spear");
+    addCheckbox("sword");
+    addCheckbox("axe");
+    addCheckbox("archer");
+    addCheckbox("light");
+    addCheckbox("marcher");
+    addCheckbox("heavy");
+    addLineBreak();
+    addPPOpt("v1PP");
+    addPPOpt("v2PP");
+    addPPOpt("v3PP");
+    addPPOpt("v4PP");
+    addLineBreak();
+    addMaxDistanceInput();
+    addLineBreak();
+    addSaveButton();
+    addLineBreak();
+    addFillButtons();
+}
+
+function addDiv() {
+    var scavDiv = document.createElement("DIV");
+    scavDiv.setAttribute("id", "scriptOutput");
+    scav.appendChild(scavDiv);
+    scav = document.getElementById("scriptOutput");
+}
+
+function clearDiv() {
+    scav.innerHTML = "";
+}
+
+function addFillButtons() {
+    var btn1 = document.createElement("BUTTON");
+    var btn2 = document.createElement("BUTTON");
+    var btn3 = document.createElement("BUTTON");
+    var btn4 = document.createElement("BUTTON");
+
+    var t1 = document.createTextNode("Option 1");
+    var t2 = document.createTextNode("Option 2");
+    var t3 = document.createTextNode("Option 3");
+    var t4 = document.createTextNode("Option 4");
+
+    if (st[0] == "1") {
+        btn1.onclick = function () { fill(v1Cap / totCap); };
+    }
+
+    if (st[1] == "1") {
+        btn2.onclick = function () { fill(v2Cap / totCap); };
+    }
+
+    if (st[2] == "1") {
+        btn3.onclick = function () { fill(v3Cap / totCap); };
+    }
+
+    if (st[3] == "1") {
+        btn4.onclick = function () { fill(v4Cap / totCap); };
+    }
+
+    btn1.setAttribute("id", "button1");
+    btn2.setAttribute("id", "button2");
+    btn3.setAttribute("id", "button3");
+    btn4.setAttribute("id", "button4");
+
+    btn1.appendChild(t1); btn2.appendChild(t2); btn3.appendChild(t3); btn4.appendChild(t4);
+    scav.appendChild(btn1); scav.appendChild(btn2); scav.appendChild(btn3); scav.appendChild(btn4);
+}
+
+function addSaveButton() {
+    var saveBtn = document.createElement("BUTTON");
+    var s1 = document.createTextNode("Save settings");
+    saveBtn.onclick = function () { save(); };
+    saveBtn.appendChild(s1);
+    scav.appendChild(saveBtn);
+}
+
+function addMaxDistanceInput() {
+    var lbl = document.createElement("LABEL");
+    var text = document.createTextNode("Maximum duration in minutes (Put 0 for no maximum): ");
+    lbl.appendChild(text);
+    scav.appendChild(lbl);
+
+    var mDis = document.createElement("INPUT");
+    mDis.setAttribute("type", "textbox");
+    mDis.setAttribute("id", "maxDistanceTxt");
+    scav.appendChild(mDis);
+    document.getElementById("maxDistanceTxt").value = localStorage.getItem("maxDis");
+}
+
+function setMaxDistance() {
+    maximumDistance = localStorage.getItem("maxDis") * 60;
+}
+
+function setTotCap() {
+    totCap = 25 * spearTot + 15 * swordTot + 10 * axeTot + 80 * lightTot + 50 * heavyTot + 10 * archerTot + 50 * marcherTot;
+}
+
+function checkAvailableOptions() {
+    var opt = document.getElementsByClassName("scavenge-option border-frame-gold-red");
+
+    for (var k = 0; k < opt.length; k++) {
+        if (opt[k].innerHTML.indexOf("btn btn-pp premium_send_button btn-disabled") == -1 && opt[k].innerHTML.indexOf("btn btn-default free_send_button") != -1) {
+            st[k] = 1;
+        }
+    }
+}
+
+function checkPPSettings() {
+    if (localStorage.getItem("v1PP") == "true") {
+        v1PP = 1.2;
+    }
+
+    if (localStorage.getItem("v2PP") == "true") {
+        v2PP = 1.2;
+    }
+
+    if (localStorage.getItem("v3PP") == "true") {
+        v3PP = 1.2;
+    }
+
+    if (localStorage.getItem("v4PP") == "true") {
+        v4PP = 1.2;
+    }
+}
+
+function addLineBreak() {
+    var ent = document.createElement("p");
+    scav.appendChild(ent);
+}
+
+function fill(ratio) {
+    $("input[name='spear']").val(ratio * spearTot); $("input[name='spear']").change();
+    $("input[name='sword']").val(ratio * swordTot); $("input[name='sword']").change();
+    $("input[name='axe']").val(ratio * axeTot); $("input[name='axe']").change();
+    $("input[name='light']").val(ratio * lightTot); $("input[name='light']").change();
+    $("input[name='heavy']").val(ratio * heavyTot); $("input[name='heavy']").change();
+    $("input[name='archer']").val(ratio * archerTot); $("input[name='archer']").change();
+    $("input[name='marcher']").val(ratio * marcherTot); $("input[name='marcher']").change();
+}
+
+function calcEff(cap1, cap2, cap3, cap4) {
+    v1Time = Math.pow(cap1 * cap1, 0.45) + 1800;
+    v2Time = Math.pow(cap2 * cap2 * 6.25, 0.45) + 1800;
+    v3Time = Math.pow(cap3 * cap3 * 25, 0.45) + 1800;
+    v4Time = Math.pow(cap4 * cap4 * 56.25, 0.45) + 1800;
+
+/*  To revert back to Herman/Coller's Efficiency Calculation
+ *  copy following paragraph code and replace with the next
+ *
+ *  var v1Eff, v2Eff, v3Eff, v4Eff, totEff;
+ *  v1Eff = (cap1 * 0.1) / v1Time * v1PP * st[0];
+ *  v2Eff = (cap2 * 0.25) / v2Time * v2PP * st[1];
+ *  v3Eff = (cap3 * 0.5) / v3Time * v3PP * st[2];
+ *  v4Eff = (cap4 * 0.75) / v4Time * v4PP * st[3];
+ *  totEff = v1Eff + v2Eff + v3Eff + v4Eff;
+ *  return totEff;
+ *  
+*/
+
+    var v1Eff, v2Eff, v3Eff, v4Eff, totEff;
+    v1Eff = (cap1 * 0.00005) / v1Time * v1PP * st[0];
+    v2Eff = (cap2 * 0.005) / v2Time * v2PP * st[1];
+    v3Eff = (cap3 * 5) / v3Time * v3PP * st[2];
+    v4Eff = (cap4 * 100) / v4Time * v4PP * st[3];
+    totEff = v1Eff + v2Eff + v3Eff + v4Eff;
+    return totEff;
+}
+
+function addCheckbox(unitType) {
+    var check = document.createElement("INPUT");
+    check.setAttribute("type", "checkbox");
+    check.setAttribute("id", unitType + "Check");
+    scav.appendChild(check);
+
+    if (localStorage.getItem(unitType) == "true") {
+        document.getElementById(unitType + "Check").checked = true;
+    } else {
+        document.getElementById(unitType + "Check").checked = false;
+    }
+
+    var img = document.createElement("IMG");
+    img.src = "https://dsen.innogamescdn.com/asset/81c7ab0bb7/graphic/unit/unit_" + unitType + ".png";
+    scav.appendChild(img);
+}
+
+function addPPOpt(vPP) {
+    var check = document.createElement("INPUT");
+    check.setAttribute("type", "checkbox");
+    check.setAttribute("id", vPP + "Check");
+    scav.appendChild(check);
+
+    if (localStorage.getItem(vPP) == "true") {
+        document.getElementById(vPP + "Check").checked = true;
+    } else {
+        document.getElementById(vPP + "Check").checked = false;
+    }
+
+    var img = document.createElement("IMG");
+    img.src = "https://dsen.innogamescdn.com/asset/6be9bf502a/graphic/resources/premium.png";
+    scav.appendChild(img);
+}
+
+function calculateRatios() {
+    if ((st[0] + st[1] + st[2] + st[3]) > 0) {
+        var interval = 5;
+
+        while (currentCap <= totCap - interval) {
+            var v1Inc, v2Inc, v3Inc, v4Inc;
+
+            v1Inc = calcEff(v1Cap + interval, v2Cap, v3Cap, v4Cap);
+            if (v1Time > maximumDistance && maximumDistance > 0) {
+                v1Inc = 0;
+            }
+
+            v2Inc = calcEff(v1Cap, v2Cap + interval, v3Cap, v4Cap);
+            if (v2Time > maximumDistance && maximumDistance > 0) {
+                v2Inc = 0;
+            }
+
+            v3Inc = calcEff(v1Cap, v2Cap, v3Cap + interval, v4Cap);
+            if (v3Time > maximumDistance && maximumDistance > 0) {
+                v3Inc = 0;
+            }
+
+            v4Inc = calcEff(v1Cap, v2Cap, v3Cap, v4Cap + interval);
+            if (v4Time > maximumDistance && maximumDistance > 0) {
+                v4Inc = 0;
+            }
+
+            if (v4Inc > v3Inc && v4Inc > v2Inc && v4Inc > v1Inc) {
+                v4Cap += interval;
+            } else if (v3Inc > v4Inc && v3Inc > v2Inc && v3Inc > v1Inc) {
+                v3Cap += interval;
+            } else if (v2Inc > v4Inc && v2Inc > v3Inc && v2Inc > v1Inc) {
+                v2Cap += interval;
+            } else if (v1Inc > v4Inc && v1Inc > v3Inc && v1Inc > v2Inc) {
+                v1Cap += interval;
+            } else {
+                currentCap = totCap;
+            }
+            currentCap += interval;
+        }
+    }
+}
+
+function getUnits() {
+    var units = document.getElementsByClassName("units-entry-all");
+
+    for (var i = 0; i < units.length; i++) {
+        var t = units[i].getAttribute("data-unit");
+
+        if (t == "spear" && localStorage.spear == "true") {
+            spearTot = units[i].innerHTML;
+            spearTot = spearTot.replace(/[()]/g, "");
+        } else if (t == "sword" && localStorage.sword == "true") {
+            swordTot = units[i].innerHTML;
+            swordTot = swordTot.replace(/[()]/g, "");
+        } else if (t == "axe" && localStorage.axe == "true") {
+            axeTot = units[i].innerHTML;
+            axeTot = axeTot.replace(/[()]/g, "");
+        } else if (t == "light" && localStorage.light == "true") {
+            lightTot = units[i].innerHTML;
+            lightTot = lightTot.replace(/[()]/g, "");
+        } else if (t == "heavy" && localStorage.heavy == "true") {
+            heavyTot = units[i].innerHTML;
+            heavyTot = heavyTot.replace(/[()]/g, "");
+        } else if (t == "archer" && localStorage.archer == "true") {
+            archerTot = units[i].innerHTML;
+            archerTot = archerTot.replace(/[()]/g, "");
+        } else if (t == "marcher" && localStorage.marcher == "true") {
+            marcherTot = units[i].innerHTML;
+            marcherTot = marcherTot.replace(/[()]/g, "");
+        }
+    }
+}
